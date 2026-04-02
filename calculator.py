@@ -22,6 +22,7 @@ class Calculator:
         self.font_btn = tkfont.Font(family="Segoe UI", size=15)
 
         self._build_ui()
+        self.root.state("zoomed")
         self.root.bind("<Key>", self._key_press)
         self.root.bind("<Configure>", self._on_resize)
         self.root.bind("<F11>", self._toggle_fullscreen)
