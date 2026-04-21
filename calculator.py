@@ -175,6 +175,7 @@ class Calculator:
         # 当前输入进制选择
         self._base_input = tk.StringVar(value="10")
         self._base_input_str = tk.StringVar(value="0")
+        self._base_raw = "0"  # 不含空格的原始输入
 
         bases = [("二进制", "2"), ("八进制", "8"), ("十进制", "10"), ("十六进制", "16")]
 
@@ -187,7 +188,7 @@ class Calculator:
                 select_frame, text=name, variable=self._base_input, value=val,
                 font=self.font_sub, bg="#ffffff", fg="#1a1a1a",
                 activebackground="#ffffff", selectcolor="#ffffff",
-                command=self._base_convert,
+                command=self._on_base_radio_change,
             )
             rb.pack(side="left", padx=6)
 
@@ -283,31 +284,55 @@ class Calculator:
             self.base_btn_frame.grid(row=2, column=0, sticky="nsew", padx=8, pady=8)
             self._base_convert()
 
+    @staticmethod
+    def _fmt_hex(s):
+        """每4位加一个空格，从右往左分组"""
+        s = s.upper()
+        groups = []
+        while len(s) > 4:
+            groups.append(s[-4:])
+            s = s[:-4]
+        groups.append(s)
+        return " ".join(reversed(groups))
+
+    def _on_base_radio_change(self):
+        """切换输入进制时，刷新显示格式并重新转换"""
+        self._update_base_display()
+        self._base_convert()
+
+    def _update_base_display(self):
+        """根据当前进制格式化显示输入值"""
+        if int(self._base_input.get()) == 16:
+            self._base_input_str.set(self._fmt_hex(self._base_raw))
+        else:
+            self._base_input_str.set(self._base_raw)
+
     def _base_clear(self):
-        self._base_input_str.set("0")
+        self._base_raw = "0"
+        self._update_base_display()
         self._base_convert()
 
     def _base_btn_press(self, label):
         if label == "⌫":
-            cur = self._base_input_str.get()
-            if len(cur) > 1:
-                self._base_input_str.set(cur[:-1])
+            if len(self._base_raw) > 1:
+                self._base_raw = self._base_raw[:-1]
             else:
-                self._base_input_str.set("0")
+                self._base_raw = "0"
         elif label == "清空":
             self._base_clear()
+            return
         else:
             ch = label.upper()
-            cur = self._base_input_str.get()
-            if cur == "0":
-                self._base_input_str.set(ch)
+            if self._base_raw == "0":
+                self._base_raw = ch
             else:
-                self._base_input_str.set(cur + ch)
+                self._base_raw = self._base_raw + ch
+        self._update_base_display()
         self._base_convert()
 
     def _base_convert(self):
         """根据输入的进制和值，转换并显示所有进制的结果"""
-        text = self._base_input_str.get().strip().upper()
+        text = self._base_raw.strip().upper()
         base = int(self._base_input.get())
         try:
             if not text or text == "0":
@@ -317,7 +342,7 @@ class Calculator:
             self._base_results["2"].set(bin(value)[2:])
             self._base_results["8"].set(oct(value)[2:])
             self._base_results["10"].set(str(value))
-            self._base_results["16"].set(hex(value)[2:].upper())
+            self._base_results["16"].set(self._fmt_hex(hex(value)[2:]))
         except ValueError:
             for v in self._base_results.values():
                 v.set("无效输入")
