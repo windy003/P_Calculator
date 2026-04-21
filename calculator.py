@@ -1,7 +1,11 @@
 import ctypes
 import os
+import threading
 import tkinter as tk
 import tkinter.font as tkfont
+
+import pystray
+from PIL import Image
 
 # 声明 DPI 感知，解决 Windows 高分屏下模糊问题
 try:
@@ -56,6 +60,11 @@ class Calculator:
         self.root.bind("<Key>", self._key_press)
         self.root.bind("<Configure>", self._on_resize)
         self.root.bind("<F11>", self._toggle_fullscreen)
+
+        # 系统托盘
+        self._tray_icon = None
+        self._ico_path = _ico
+        self.root.protocol("WM_DELETE_WINDOW", self._hide_to_tray)
 
     def _build_ui(self):
         # Root grid: 3 rows — tab bar + display/panel + buttons
@@ -349,6 +358,37 @@ class Calculator:
         except ValueError:
             for v in self._base_results.values():
                 v.set("无效输入")
+
+    # ── System tray ─────────────────────────────────────────────────────────
+
+    def _hide_to_tray(self):
+        """隐藏窗口到系统托盘"""
+        self.root.withdraw()
+        if self._tray_icon is None:
+            self._create_tray_icon()
+
+    def _create_tray_icon(self):
+        image = Image.open(self._ico_path)
+        menu = pystray.Menu(
+            pystray.MenuItem("显示计算器", self._show_from_tray, default=True),
+            pystray.MenuItem("退出(&X)", self._quit_app),
+        )
+        self._tray_icon = pystray.Icon("P_Calculator", image, "计算器", menu)
+        threading.Thread(target=self._tray_icon.run, daemon=True).start()
+
+    def _show_from_tray(self, icon=None, item=None):
+        self.root.after(0, self._restore_window)
+
+    def _restore_window(self):
+        self.root.deiconify()
+        self.root.state("zoomed")
+        self.root.lift()
+        self.root.focus_force()
+
+    def _quit_app(self, icon=None, item=None):
+        if self._tray_icon:
+            self._tray_icon.stop()
+        self.root.after(0, self.root.destroy)
 
     # ── Fullscreen & resize ──────────────────────────────────────────────────
 
