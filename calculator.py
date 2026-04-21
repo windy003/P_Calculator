@@ -1,4 +1,5 @@
 import ctypes
+import os
 import tkinter as tk
 import tkinter.font as tkfont
 
@@ -21,6 +22,8 @@ class Calculator:
     def __init__(self, root):
         self.root = root
         self.root.title("计算器")
+        _ico = os.path.join(os.path.dirname(os.path.abspath(__file__)), "256x256.ico")
+        self.root.iconbitmap(_ico)
         self.root.resizable(True, True)
         self.root.configure(bg="#ffffff")
 
@@ -492,6 +495,7 @@ class Calculator:
 
 
 if __name__ == "__main__":
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("P_Calculator")
     root = tk.Tk()
     app = Calculator(root)
     root.mainloop()
