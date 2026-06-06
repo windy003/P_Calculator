@@ -65,6 +65,8 @@ class Calculator:
         self._tray_icon = None
         self._ico_path = _ico
         self.root.protocol("WM_DELETE_WINDOW", self._hide_to_tray)
+        # Alt+F4 直接退出程序,而不是隐藏到托盘
+        self.root.bind("<Alt-F4>", self._quit_app)
 
     def _build_ui(self):
         # Root grid: 3 rows — tab bar + display/panel + buttons
@@ -389,6 +391,7 @@ class Calculator:
         if self._tray_icon:
             self._tray_icon.stop()
         self.root.after(0, self.root.destroy)
+        return "break"
 
     # ── Fullscreen & resize ──────────────────────────────────────────────────
 
