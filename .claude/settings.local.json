@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "PowerShell(python -m py_compile calculator.py; if \\($?\\) { \"OK\" })"
     ]
   }
 }

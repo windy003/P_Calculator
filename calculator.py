@@ -60,6 +60,11 @@ class Calculator:
         self.root.bind("<Key>", self._key_press)
         self.root.bind("<Configure>", self._on_resize)
         self.root.bind("<F11>", self._toggle_fullscreen)
+        # Alt+J / Alt+Z 切换标签页
+        self.root.bind("<Alt-j>", lambda e: self._switch_mode("calc"))
+        self.root.bind("<Alt-J>", lambda e: self._switch_mode("calc"))
+        self.root.bind("<Alt-z>", lambda e: self._switch_mode("base"))
+        self.root.bind("<Alt-Z>", lambda e: self._switch_mode("base"))
 
         # 系统托盘
         self._tray_icon = None
@@ -79,13 +84,13 @@ class Calculator:
         self.tab_frame = tk.Frame(self.root, bg="#e8e8e8")
         self.tab_frame.grid(row=0, column=0, sticky="ew", padx=8, pady=(8, 0))
         self.tab_calc = tk.Button(
-            self.tab_frame, text="计算器", font=self.font_sub,
+            self.tab_frame, text="计算器(J)", font=self.font_sub, underline=4,
             bg="#ffffff", fg="#1a73e8", relief="flat", cursor="hand2",
             command=lambda: self._switch_mode("calc"),
         )
         self.tab_calc.pack(side="left", padx=(4, 2), pady=4, ipadx=12, ipady=2)
         self.tab_base = tk.Button(
-            self.tab_frame, text="进制转换", font=self.font_sub,
+            self.tab_frame, text="进制转换(Z)", font=self.font_sub, underline=5,
             bg="#e8e8e8", fg="#555555", relief="flat", cursor="hand2",
             command=lambda: self._switch_mode("base"),
         )
@@ -191,20 +196,28 @@ class Calculator:
         self._base_input_str = tk.StringVar(value="0")
         self._base_raw = "0"  # 不含空格的原始输入
 
-        bases = [("二进制", "2"), ("八进制", "8"), ("十进制", "10"), ("十六进制", "16")]
+        # (显示名, 进制值, 下划线位置)
+        bases = [("二进制(B)", "2", 4), ("八进制(O)", "8", 4),
+                 ("十进制(D)", "10", 4), ("十六进制(H)", "16", 5)]
 
         select_frame = tk.Frame(self.base_frame, bg="#ffffff")
         select_frame.grid(row=0, column=0, sticky="ew", padx=16, pady=(12, 8))
         tk.Label(select_frame, text="输入进制：", font=self.font_sub,
                  bg="#ffffff", fg="#555555").pack(side="left")
-        for name, val in bases:
+        for name, val, ul in bases:
             rb = tk.Radiobutton(
                 select_frame, text=name, variable=self._base_input, value=val,
-                font=self.font_sub, bg="#ffffff", fg="#1a1a1a",
+                font=self.font_sub, bg="#ffffff", fg="#1a1a1a", underline=ul,
                 activebackground="#ffffff", selectcolor="#ffffff",
                 command=self._on_base_radio_change,
             )
             rb.pack(side="left", padx=6)
+
+        # Alt+B/O/D/H 切换输入进制（仅进制转换界面生效）
+        for key, base_val in (("b", "2"), ("o", "8"), ("d", "10"), ("h", "16")):
+            for k in (key, key.upper()):
+                self.root.bind(f"<Alt-{k}>",
+                               lambda e, v=base_val: self._select_base(v))
 
         # 输入框
         input_frame = tk.Frame(self.base_frame, bg="#ffffff")
@@ -309,6 +322,23 @@ class Calculator:
         groups.append(s)
         return " ".join(reversed(groups))
 
+    @staticmethod
+    def _fmt_dec(s):
+        """每3位加一个空格，从右往左分组"""
+        groups = []
+        while len(s) > 3:
+            groups.append(s[-3:])
+            s = s[:-3]
+        groups.append(s)
+        return " ".join(reversed(groups))
+
+    def _select_base(self, base_val):
+        """快捷键切换输入进制（仅在进制转换界面生效）"""
+        if self._mode != "base":
+            return
+        self._base_input.set(base_val)
+        self._on_base_radio_change()
+
     def _on_base_radio_change(self):
         """切换输入进制时，刷新显示格式并重新转换"""
         self._update_base_display()
@@ -316,8 +346,11 @@ class Calculator:
 
     def _update_base_display(self):
         """根据当前进制格式化显示输入值"""
-        if int(self._base_input.get()) == 16:
+        base = int(self._base_input.get())
+        if base == 16:
             self._base_input_str.set(self._fmt_hex(self._base_raw))
+        elif base == 10:
+            self._base_input_str.set(self._fmt_dec(self._base_raw))
         else:
             self._base_input_str.set(self._base_raw)
 
@@ -355,7 +388,7 @@ class Calculator:
                 value = int(text, base)
             self._base_results["2"].set(bin(value)[2:])
             self._base_results["8"].set(oct(value)[2:])
-            self._base_results["10"].set(str(value))
+            self._base_results["10"].set(self._fmt_dec(str(value)))
             self._base_results["16"].set(self._fmt_hex(hex(value)[2:]))
         except ValueError:
             for v in self._base_results.values():
