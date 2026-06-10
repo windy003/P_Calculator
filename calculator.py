@@ -137,7 +137,8 @@ class Calculator:
         buttons = [
             ("CE",  0, 0, 1, "fn"),
             ("C",   0, 1, 1, "fn"),
-            ("⌫",  0, 2, 2, "fn"),
+            ("⌫",  0, 2, 1, "fn"),
+            ("xʸ",  0, 3, 1, "op"),
             ("7",   1, 0, 1, "num"),
             ("8",   1, 1, 1, "num"),
             ("9",   1, 2, 1, "num"),
@@ -483,7 +484,7 @@ class Calculator:
             elif "." not in d:
                 self._set_display(d + ".")
 
-        elif label in ("+", "−", "×", "÷"):
+        elif label in ("+", "−", "×", "÷", "xʸ"):
             self._store_operation(label)
 
         elif label == "=":
@@ -508,9 +509,10 @@ class Calculator:
 
     def _store_operation(self, op):
         d = self._get_display()
-        op_map = {"÷": "/", "×": "*", "−": "-", "+": "+"}
+        op_map = {"÷": "/", "×": "*", "−": "-", "+": "+", "xʸ": "**"}
+        display_op = "^" if op == "xʸ" else op
         self.expression = d + op_map[op]
-        self.sub_display_var.set(d + " " + op + " ")
+        self.sub_display_var.set(d + " " + display_op + " ")
         self.new_number = True
 
     def _calculate(self):
@@ -542,7 +544,7 @@ class Calculator:
         key_map = {
             "/": "÷", "*": "×", "-": "−",
             "+": "+", "=": "=", "\r": "=",
-            "\x08": "⌫",
+            "\x08": "⌫", "^": "xʸ",
         }
         key = event.char
         if key.isdigit() or key == ".":

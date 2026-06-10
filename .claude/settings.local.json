@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "PowerShell(python -m py_compile calculator.py; if \\($?\\) { \"OK\" })"
+      "PowerShell(python -m py_compile calculator.py; if \\($?\\) { \"OK\" })",
+      "PowerShell(python -c \"import ast; ast.parse\\(open\\('calculator.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")"
     ]
   }
 }
