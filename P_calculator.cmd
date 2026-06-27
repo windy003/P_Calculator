@@ -1,1 +1,1 @@
-start  /b pythonw ./calculator.py
+start  /b  "" "D:\files\using\Python\P_Calculator\.venv\Scripts\pythonw.exe" "D:\files\using\Python\P_Calculator\calculator.py"
