@@ -253,10 +253,12 @@ class Calculator:
                      bg="#ffffff", fg="#888888", anchor="w").grid(
                 row=i, column=0, sticky="w", pady=6, padx=(0, 12))
             var = tk.StringVar(value="0")
-            lbl = tk.Label(result_frame, textvariable=var, font=self.font_base_value,
-                           bg="#f8f8f8", fg="#1a1a1a", anchor="e", relief="flat",
-                           padx=12, pady=6)
-            lbl.grid(row=i, column=1, sticky="ew", pady=6)
+            # 用只读 Entry 代替 Label，使结果可以用鼠标选中并复制
+            ent = tk.Entry(result_frame, textvariable=var, font=self.font_base_value,
+                           fg="#1a1a1a", justify="right", relief="flat",
+                           readonlybackground="#f8f8f8", state="readonly",
+                           bd=0, highlightthickness=0, cursor="xterm")
+            ent.grid(row=i, column=1, sticky="ew", pady=6, ipady=6, ipadx=12)
             self._base_results[base] = var
 
         # 进制转换的按钮键盘
@@ -311,6 +313,16 @@ class Calculator:
             self.base_frame.grid(row=1, column=0, sticky="nsew", padx=8, pady=4)
             self.base_btn_frame.grid(row=2, column=0, sticky="nsew", padx=8, pady=8)
             self._base_convert()
+
+    @staticmethod
+    def _fmt_bin(s):
+        """每4位加一个逗号，从右往左分组"""
+        groups = []
+        while len(s) > 4:
+            groups.append(s[-4:])
+            s = s[:-4]
+        groups.append(s)
+        return ",".join(reversed(groups))
 
     @staticmethod
     def _fmt_hex(s):
@@ -387,7 +399,7 @@ class Calculator:
                 value = 0
             else:
                 value = int(text, base)
-            self._base_results["2"].set(bin(value)[2:])
+            self._base_results["2"].set(self._fmt_bin(bin(value)[2:]))
             self._base_results["8"].set(oct(value)[2:])
             self._base_results["10"].set(self._fmt_dec(str(value)))
             self._base_results["16"].set(self._fmt_hex(hex(value)[2:]))
